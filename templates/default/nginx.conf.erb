@@ -1,0 +1,65 @@
+user <%= node[:nginx][:user] %>;
+worker_processes  <%= node[:nginx][:worker_processes] %>;
+
+error_log  <%= node[:nginx][:log_dir] %>/error.log;
+pid        <%= node[:nginx][:pid] %>;
+
+events {
+    <% if node[:nginx][:use_epoll] %>use epoll;<% end %>
+    multi_accept <%= node[:nginx][:multi_accept] %>;
+    worker_connections <%= node[:nginx][:worker_connections] %>;
+}
+
+http {
+    sendfile        on;
+    tcp_nopush      on;
+    tcp_nodelay     on;
+    gzip            <%= node[:nginx][:gzip] %>;
+    <% if node[:nginx][:disable_access_log] %>
+    access_log      off;
+    <% end %>
+    proxy_buffering off;
+
+    <% if node[:nginx][:keepalive] == "on" %>
+    keepalive_timeout  <%= node[:nginx][:keepalive_timeout] %>; 
+    <% end %>
+
+    upstream <%= node[:nginx][:upstream][:name] %> {
+        <% node[:nginx][:upstream][:servers].each do |s| %>
+        server <%= s[:address] -%> max_fails=<%= s[:max_fails] -%> fail_timeout=<%= s[:fail_timeout] -%> weight=<%= s[:weight] -%><%- if s[:down] -%> down <%- end -%>;
+        <% end %>
+    }
+
+    <% if node[:nginx][:ssl_only] %>
+    server {
+        listen       <%= node[:nginx][:listen] %>;
+        server_name  <%= node[:hostname] %>;
+        access_log   /dev/null;
+        error_log    /dev/null;
+        rewrite ^(.*) https://$host$1 permanent;
+    }
+    <% end %>
+
+    server {
+        listen               <%= node[:nginx][:ssl_listen] %> default ssl;
+        ssl                  on;
+        ssl_certificate      <%= @crt_path %>;
+        ssl_certificate_key  <%= @key_path %>; 
+        ssl_session_timeout  5m;
+        ssl_protocols        <%= node[:nginx][:ssl_protocols] %>;
+        ssl_ciphers          <%= node[:nginx][:ssl_ciphers] %>;
+        ssl_prefer_server_ciphers <%= node[:nginx][:ssl_prefer_server_ciphers] %>;
+
+        # SSL Log
+        access_log <%= node[:nginx][:log_dir] %>/ssl-access.log;
+        error_log  <%= node[:nginx][:log_dir] %>/ssl-error.log;
+
+        location / {
+            proxy_pass http://<%= node[:nginx][:upstream][:name] %>;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-Proto https;
+        }
+    }
+}
