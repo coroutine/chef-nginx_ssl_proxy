@@ -1,9 +1,11 @@
 Description
 ===========
 
-Installs nginx from package, and configures it as a Reverse Proxy/
-SSL terminator (e.g. in front of haproxy). Certificate content is 
-read from an encrypted data bag.
+Installs the OS's package for nginx, and configures it as a Reverse Proxy/
+SSL terminator (e.g. in front of haproxy). Certificate content is read from
+an encrypted data bag.  
+
+See the *Usage* section below for more information.
 
 Requirements
 ============
@@ -40,6 +42,9 @@ The upstream module is used to proxy connections to another server (e.g an app s
             :down         => false
         }
     ]
+
+Additionally, this cookbook will read attribute values set in the Opscode `nginx` cookbook. See 
+`attributes/default.rb` for more information.
 
 Usage
 =====
