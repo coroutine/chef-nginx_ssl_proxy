@@ -40,7 +40,7 @@ http {
     }
     <% end %>
     
-    <%= @ssl_server_declarations.each do |ssl_server| %>
+    <% @ssl_server_declarations.each do |ssl_server| %>
     server {
         listen               <%= ssl_server["ssl_listen"] %> default ssl;
         ssl                  on;
