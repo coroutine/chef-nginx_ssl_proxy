@@ -28,7 +28,6 @@ default[:nginx][:disable_access_log] = true
 
 # The following are new attributes defined in this cookbook.
 default[:nginx][:listen]        = "80"
-default[:nginx][:ssl_listen]    = "443"
 default[:nginx][:ssldir]        = "ssl" # inside [:nginx][:dir]
 default[:nginx][:ssl_protocols] = "SSLv3 TLSv1" # PCI compliant
 default[:nginx][:ssl_ciphers]   = "ALL:!aNULL:!ADH:!eNULL:!LOW:!MEDIUM:!EXP:RC4+RSA:+HIGH"
@@ -37,7 +36,7 @@ default[:nginx][:ssl_prefer_server_ciphers] = 'on'
 default[:nginx][:use_epoll]     = true
 default[:nginx][:multi_accept]  = 'on' 
 default[:nginx][:ssl_only]      = true # redirect all traffic from port 80 -> 443
-default[:nginx][:databag_item]  = nil # id to use for an encrypted data bag
+default[:nginx][:cert_items]    = nil # id to use for an encrypted data bag
                                       # item containing the ssl cert info
 
 # Config for upstream

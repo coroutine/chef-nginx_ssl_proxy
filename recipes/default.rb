@@ -2,7 +2,7 @@
 # Cookbook Name:: nginx_ssl_proxy
 # Recipe:: default
 #
-# Copyright 2021, Coroutine LLC
+# Copyright 2012, Coroutine LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,16 +27,24 @@ include_recipe "nginx::default"
 #   :key  => ['...', '...', ] # content for .key
 # }
 
-# NOTE: shared secret must be in "/etc/chef/encrypted_data_bag_secret"
-cert = Chef::EncryptedDataBagItem.load("nginx_ssl_certs", node[:nginx][:databag_item])
-cert_crt_path = "#{node[:nginx][:dir]}/#{node[:nginx][:ssldir]}/#{cert["id"]}.crt"
-cert_key_path = "#{node[:nginx][:dir]}/#{node[:nginx][:ssldir]}/#{cert["id"]}.key"
+defaults_ssl_listen = { "ssl_listen" => "443" }
 
-Chef::Log.info("cert_crt_path = #{cert_crt_path}")
-Chef::Log.info("cert_key_path = #{cert_key_path}")
-Chef::Log.info("cert.id = #{cert["id"]}\n\n")
-Chef::Log.info("cert.cert\n\n #{cert["cert"]}\n\n")
-Chef::Log.info("cert.key\n\n #{cert["key"]}\n\n")
+# NOTE: shared secret must be in "/etc/chef/encrypted_data_bag_secret"
+cert_key_pairs = node[:nginx][:cert_items].map do |cert_item|
+  
+  # By merging the cert data into the default_ssl_listen data,
+  # we guarantee an ssl_listen value of '443' if not specified
+  # in the cert data.
+  cert      = defaults_ssl_listen.merge(Chef::EncryptedDataBagItem.load("nginx_ssl_certs", cert_item))
+  paths     = {
+    "crt_path"  => File.join(node[:nginx][:dir], node[:nginx][:ssldir], "#{cert["id"]}.crt"),
+    "key_path"  => File.join(node[:nginx][:dir], node[:nginx][:ssldir], "#{cert["id"]}.key"),
+  }
+  
+  # cert is merged into paths in the event that paths were specified
+  # in the cert hash.
+  paths.merge(cert)
+end
 
 # Create directory for Certs
 directory "#{node[:nginx][:dir]}/#{node[:nginx][:ssldir]}" do
@@ -46,35 +54,35 @@ directory "#{node[:nginx][:dir]}/#{node[:nginx][:ssldir]}" do
   recursive true
 end
 
-# Write the .crt file, eg: /etc/nginx/ssl/foo.crt
-template cert_crt_path do
-  source "ssl.erb"
-  owner  "root"
-  group  "root"
-  mode   0600
-  variables(:content => cert["cert"].join("\n"))
-end 
+cert_key_pairs.each do |ckp|
+  
+  # Write the .crt file, eg: /etc/nginx/ssl/foo.crt
+  template ckp["crt_path"] do
+    source "ssl.erb"
+    owner  "root"
+    group  "root"
+    mode   0600
+    variables(:content => ckp["cert"].join("\n"))
+  end 
 
-# Write the .key file, eg: /etc/nginx/ssl/foo.key
-template cert_key_path do
-  source "ssl.erb"
-  owner  "root"
-  group  "root"
-  mode   0600
-  variables(:content => cert["key"].join("\n"))
-end 
+  # Write the .key file, eg: /etc/nginx/ssl/foo.key
+  template ckp["key_path"] do
+    source "ssl.erb"
+    owner  "root"
+    group  "root"
+    mode   0600
+    variables(:content => ckp["key"].join("\n"))
+  end 
+end
 
 # Write the new nginx config file
 template "#{node[:nginx][:dir]}/nginx.conf" do
-  #path "#{node[:nginx][:dir]}/nginx.conf"
   source "nginx.conf.erb"
   owner "root"
   group "root"
   mode 0644
   variables(
-    :cert_name => cert[:id],
-    :crt_path  => cert_crt_path,
-    :key_path  => cert_key_path
+    :ssl_server_declarations => cert_key_pairs.map { |ckp| ckp.reject { |k, v| ["crt", "key"].include?(k) } }
   )
   notifies :reload, "service[nginx]"
 end

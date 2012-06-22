@@ -39,12 +39,13 @@ http {
         rewrite ^(.*) https://$host$1 permanent;
     }
     <% end %>
-
+    
+    <%= @ssl_server_declarations.each do |ssl_server| %>
     server {
-        listen               <%= node[:nginx][:ssl_listen] %> default ssl;
+        listen               <%= ssl_server["ssl_listen"] %> default ssl;
         ssl                  on;
-        ssl_certificate      <%= @crt_path %>;
-        ssl_certificate_key  <%= @key_path %>; 
+        ssl_certificate      <%= ssl_server["crt_path"] %>;
+        ssl_certificate_key  <%= ssl_server["key_path"] %>; 
         ssl_session_timeout  5m;
         ssl_protocols        <%= node[:nginx][:ssl_protocols] %>;
         ssl_ciphers          <%= node[:nginx][:ssl_ciphers] %>;
@@ -62,4 +63,5 @@ http {
             proxy_set_header X-Forwarded-Proto https;
         }
     }
+    <% end %>
 }

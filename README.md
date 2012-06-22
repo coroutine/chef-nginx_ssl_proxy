@@ -18,9 +18,8 @@ Attributes
 ==========
 The following attributes are defined in this cookbook:
 
-* `node[:nginx][:databag_item]` - the name/id of the item to read from an encrypted data bag
+* `node[:nginx][:cert_items]` - the name/id of the item to read from an encrypted data bag, containing the .crt and .key
 * `node[:nginx][:listen]` - non-ssl port on which nginx listens. If `ssl_only` is true, all connections to this port will be redirected to the `ssl_listen` port. (default is 80)
-* `node[:nginx][:ssl_listen]` - Port of SSL connections (deafult is 443)
 * `node[:nginx][:ssldir]` - directory where ssl certs are stored. This is a subdirectory of `node[:nginx][:dir]`.
 * `node[:nginx][:ssl_protocols]` - the SSL protocols to use (default is "SSLv3 TLSv1")
 * `node[:nginx][:ssl_ciphers]` - SSL ciphers to use (default is "ALL:!aNULL:!ADH:!eNULL:!LOW:!MEDIUM:!EXP:RC4+RSA:+HIGH")
