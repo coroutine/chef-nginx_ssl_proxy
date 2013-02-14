@@ -34,7 +34,7 @@ default[:nginx][:ssl_ciphers]   = "ALL:!aNULL:!ADH:!eNULL:!LOW:!MEDIUM:!EXP:RC4+
 default[:nginx][:ssl_prefer_server_ciphers] = 'on'
 
 default[:nginx][:use_epoll]     = true
-default[:nginx][:multi_accept]  = 'on' 
+default[:nginx][:multi_accept]  = true 
 default[:nginx][:ssl_only]      = true # redirect all traffic from port 80 -> 443
 default[:nginx][:cert_items]    = nil # id to use for an encrypted data bag
                                       # item containing the ssl cert info

@@ -6,7 +6,7 @@ pid        <%= node[:nginx][:pid] %>;
 
 events {
     <% if node[:nginx][:use_epoll] %>use epoll;<% end %>
-    multi_accept <%= node[:nginx][:multi_accept] %>;
+    multi_accept <%= node[:nginx][:multi_accept] ? "on" : "off" %>;
     worker_connections <%= node[:nginx][:worker_connections] %>;
 }
 
